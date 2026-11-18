@@ -78,7 +78,7 @@ python3 -m http.server 8080   # or: npm run serve
 
 ## Tests
 
-Node 20+ (uses the built-in test runner and WebCrypto, no packages to install):
+Node 22+ (uses the built-in test runner and WebCrypto, no packages to install):
 
 ```bash
 npm test
@@ -98,7 +98,7 @@ src/oauth.js        Token classification, at_hash/c_hash, authorization URL revi
 src/wordlist.js     Built-in weak-secret candidates
 src/app.js          DOM wiring
 test/               node:test suites
-.github/workflows/  CI (Node 20/22/24) and GitHub Pages deploy
+.github/workflows/  CI (Node 22/24) and GitHub Pages deploy
 ```
 
 ## Deploying your own copy
