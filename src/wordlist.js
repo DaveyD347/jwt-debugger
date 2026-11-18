@@ -1,0 +1,33 @@
+// Built-in candidates for the weak HMAC secret scan: defaults from tutorials, framework
+// templates and documentation that regularly end up in production. Users can add their own list.
+
+export const COMMON_SECRETS = [
+  'secret', 'Secret', 'SECRET', 'secret123', 'secretkey', 'secret_key', 'secret-key', 'mysecret', 'my_secret',
+  'mysecretkey', 'my-secret-key', 'my_secret_key', 'supersecret', 'super-secret', 'supersecretkey',
+  'topsecret', 'shhhhh', 'shhhhhared-secret', 'shared-secret', 'shared_secret',
+  'your-256-bit-secret', 'your-384-bit-secret', 'your-512-bit-secret', 'your_jwt_secret', 'your-secret-key',
+  'yoursecret', 'your_secret_key', 'YOUR_SECRET_KEY', 'jwt', 'jwt-secret', 'jwt_secret', 'jwtsecret',
+  'JWT_SECRET', 'jwtSecret', 'jwt-key', 'jwt_key', 'jwtkey', 'jwtSecretKey', 'jwt_secret_key', 'token', 'tokensecret',
+  'token_secret', 'auth', 'authsecret', 'auth_secret', 'auth-secret', 'key', 'Key', 'KEY', 'private', 'privatekey',
+  'private_key', 'public', 'password', 'Password', 'PASSWORD', 'password1', 'password123', 'Passw0rd', 'P@ssw0rd',
+  'pass', 'passwd', 'admin', 'admin123', 'administrator', 'root', 'toor', 'test', 'test123', 'testing', 'testsecret',
+  'test_secret', 'dev', 'development', 'devsecret', 'dev_secret', 'prod', 'production', 'staging', 'local', 'demo',
+  'example', 'sample', 'changeme', 'change_me', 'change-me', 'changethis', 'change_this_secret', 'CHANGE_ME',
+  'changeit', 'replaceme', 'replace_me', 'default', 'default_secret', 'qwerty', 'qwerty123', 'abc123', 'abcdef',
+  '123456', '1234567', '12345678', '123456789', '1234567890', '0123456789', '000000', '111111', 'letmein',
+  'welcome', 'hello', 'helloworld', 'hello_world', 'foobar', 'foo', 'bar', 'baz', 'asdf', 'asdfgh', 'zxcvbn',
+  'iloveyou', 'monkey', 'dragon', 'master', 'trustno1', 'sunshine', 'princess', 'football', 'baseball',
+  'app', 'appsecret', 'app_secret', 'app-secret', 'application', 'api', 'apisecret', 'api_secret', 'apikey', 'api_key',
+  'server', 'server_secret', 'backend', 'node', 'nodejs', 'express', 'django', 'flask', 'rails', 'laravel', 'spring',
+  'springboot', 'keyboard cat', 'keyboardcat', 'session', 'session_secret', 'sessionsecret', 'cookie', 'cookie_secret',
+  's3cr3t', 's3cret', 'secr3t', '5ecret', 'gelato', 'hmac', 'hmacsecret', 'hmac_secret', 'hs256', 'HS256',
+  'signing_key', 'signingkey', 'signing-key', 'sign', 'signature', 'encryption_key', 'encryptionkey', 'crypto',
+  'access', 'access_token', 'refresh', 'refresh_token', 'access_secret', 'refresh_secret', 'ACCESS_TOKEN_SECRET',
+  'REFRESH_TOKEN_SECRET', 'TOKEN_SECRET', 'SECRET_KEY', 'APP_SECRET', 'AUTH_SECRET', 'NEXTAUTH_SECRET',
+  'oauth', 'oauth_secret', 'client_secret', 'clientsecret', 'login', 'user', 'username', 'guest', 'null', 'undefined',
+  'none', 'true', 'false', '', ' ', '0', '1', 'a', 'x', 'xxx', 'xxxx', 'aaaa', 'abc', 'abcd', 'abcde',
+  'thisismysecret', 'thisisasecret', 'this_is_a_secret', 'this-is-my-secret', 'ThisIsMySecret', 'notasecret',
+  'not-so-secret', 'insecure', 'unsafe', 'example_secret', 'example-secret', 'my-32-character-ultra-secure-and-ultra-long-secret',
+  'super-secret-key-that-nobody-knows', 'a-string-secret-at-least-256-bits-long', 'secret-key-for-jwt',
+  '00000000000000000000000000000000', 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', 'qwertyuiopasdfghjklzxcvbnm123456',
+];

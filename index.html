@@ -1,0 +1,262 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- connect-src 'none' means this page cannot make any network request after it loads. -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'none'; form-action 'none'; base-uri 'none'">
+  <meta name="referrer" content="no-referrer">
+  <meta name="description" content="Decode, verify and security-audit JWTs and OAuth 2.0 requests entirely in your browser. Nothing is sent to any server.">
+  <title>JWT Debugger</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%2310b981'/%3E%3Cpath d='M9 16l5 5 9-10' stroke='white' stroke-width='3.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="style.css">
+  <script type="module" src="src/app.js"></script>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="logo" aria-hidden="true">{ }</span>
+      <div>
+        <h1>JWT Debugger</h1>
+        <p class="tagline">Decode, verify and audit JSON Web Tokens without them leaving your browser</p>
+      </div>
+    </div>
+    <div class="privacy" title="This page's Content-Security-Policy sets connect-src 'none': the browser blocks every outgoing request.">
+      <span class="dot" aria-hidden="true"></span> Offline by design: CSP <code>connect-src 'none'</code>
+    </div>
+  </header>
+
+  <nav class="tabs" role="tablist">
+    <button role="tab" id="tab-debug" aria-controls="panel-debug" aria-selected="true">Debugger</button>
+    <button role="tab" id="tab-encode" aria-controls="panel-encode" aria-selected="false">Encoder &amp; attacks</button>
+    <button role="tab" id="tab-oauth" aria-controls="panel-oauth" aria-selected="false">OAuth URL inspector</button>
+  </nav>
+
+  <main>
+    <!-- ============================== DEBUGGER ============================== -->
+    <section id="panel-debug" role="tabpanel" aria-labelledby="tab-debug" class="panel">
+      <div class="grid">
+        <div class="col">
+          <div class="card">
+            <div class="card-head">
+              <h2>Token</h2>
+              <div class="samples">
+                <span class="muted">Samples:</span>
+                <button class="chip" data-sample="weak">HS256 weak secret</button>
+                <button class="chip" data-sample="none">alg: none</button>
+                <button class="chip" data-sample="rs256">RS256 + key</button>
+                <button class="chip" data-sample="bad">Risky claims</button>
+              </div>
+            </div>
+            <label for="token" class="sr-only">Encoded JWT</label>
+            <textarea id="token" class="mono token-input" spellcheck="false" autocomplete="off" placeholder="Paste a JWT (header.payload.signature). A leading &quot;Bearer &quot; is ignored."></textarea>
+            <div id="token-colored" class="mono token-colored" aria-hidden="true"></div>
+            <div id="token-error" class="error" role="alert" hidden></div>
+            <div class="row small">
+              <label>Clock skew <input id="skew" type="number" min="0" max="3600" value="0" class="num"> s</label>
+              <button id="clear" class="ghost">Clear</button>
+            </div>
+          </div>
+
+          <div class="card">
+            <h2>Verify signature</h2>
+            <label for="verify-key" class="small muted">Secret, PEM (public key, certificate or PKCS#8), JWK or JWKS</label>
+            <textarea id="verify-key" class="mono key-input" spellcheck="false" autocomplete="off" placeholder="your-256-bit-secret&#10;or&#10;-----BEGIN PUBLIC KEY-----"></textarea>
+            <div class="row small">
+              <label>Secret encoding
+                <select id="secret-enc">
+                  <option value="utf8">UTF-8</option>
+                  <option value="base64">Base64</option>
+                  <option value="base64url">Base64url</option>
+                  <option value="hex">Hex</option>
+                </select>
+              </label>
+              <label>Pin algorithm
+                <select id="pin-alg">
+                  <option value="">Trust token header</option>
+                </select>
+              </label>
+            </div>
+            <div class="row">
+              <button id="verify" class="primary">Verify</button>
+              <button id="confusion" title="Checks whether this HS* token was signed using the public key above as the HMAC secret (RS/ES to HS algorithm confusion)">Test key confusion</button>
+            </div>
+            <div id="verify-result" class="result" aria-live="polite"></div>
+          </div>
+
+          <div class="card">
+            <h2>Weak HMAC secret scan</h2>
+            <p class="small muted">Tries a dictionary of secrets against an HS256/384/512 signature, locally. <span id="wordlist-count"></span></p>
+            <details>
+              <summary class="small">Add your own candidates</summary>
+              <textarea id="wordlist" class="mono key-input" spellcheck="false" placeholder="One candidate per line"></textarea>
+              <label class="small file">Load a wordlist file <input id="wordlist-file" type="file" accept=".txt,.lst,text/plain"></label>
+            </details>
+            <div class="row">
+              <button id="scan" class="primary">Start scan</button>
+              <button id="scan-stop" disabled>Stop</button>
+              <progress id="scan-progress" max="1" value="0"></progress>
+            </div>
+            <div id="scan-result" class="result" aria-live="polite"></div>
+          </div>
+        </div>
+
+        <div class="col">
+          <div class="card summary" id="summary" hidden>
+            <div class="summary-main">
+              <div id="score" class="score"></div>
+              <div>
+                <div id="token-kind" class="kind"></div>
+                <div id="token-meta" class="small muted"></div>
+              </div>
+            </div>
+            <div id="scopes" class="scopes"></div>
+          </div>
+
+          <div class="card" id="findings-card" hidden>
+            <h2>Security findings <span id="findings-count" class="badge"></span></h2>
+            <ul id="findings" class="findings"></ul>
+          </div>
+
+          <div class="card part" id="header-card" hidden>
+            <h2><span class="swatch hdr"></span>Header</h2>
+            <pre id="header-json" class="json mono"></pre>
+            <table id="header-table" class="claims"></table>
+          </div>
+
+          <div class="card part" id="payload-card" hidden>
+            <h2><span class="swatch pay"></span>Payload</h2>
+            <pre id="payload-json" class="json mono"></pre>
+            <table id="payload-table" class="claims"></table>
+          </div>
+
+          <div class="card part" id="sig-card" hidden>
+            <h2><span class="swatch sig"></span>Signature</h2>
+            <pre id="sig-hex" class="mono hex"></pre>
+          </div>
+
+          <div class="card" id="oidc-card" hidden>
+            <h2>OIDC hash check</h2>
+            <p class="small muted">This ID token carries <span id="oidc-claims"></span>. Paste the matching value to check it.</p>
+            <label class="small" for="oidc-value">Access token (for at_hash) or authorization code (for c_hash)</label>
+            <input id="oidc-value" class="mono wide" spellcheck="false" autocomplete="off">
+            <div class="row"><button id="oidc-check">Check</button></div>
+            <div id="oidc-result" class="result" aria-live="polite"></div>
+          </div>
+
+          <div class="card empty" id="empty">
+            <h2>Nothing decoded yet</h2>
+            <p>Paste a token on the left or pick a sample. Everything runs in this tab with the browser's WebCrypto API; tokens and keys are never stored or sent anywhere.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================== ENCODER ============================== -->
+    <section id="panel-encode" role="tabpanel" aria-labelledby="tab-encode" class="panel" hidden>
+      <div class="grid">
+        <div class="col">
+          <div class="card">
+            <h2>Header</h2>
+            <textarea id="enc-header" class="mono json-input" spellcheck="false">{
+  "alg": "HS256",
+  "typ": "JWT"
+}</textarea>
+          </div>
+          <div class="card">
+            <h2>Payload</h2>
+            <textarea id="enc-payload" class="mono json-input tall" spellcheck="false"></textarea>
+            <div class="row small">
+              <button class="chip" data-claim="iat">Set iat = now</button>
+              <button class="chip" data-claim="exp">Set exp = +1h</button>
+              <button class="chip" data-claim="expired">Make expired</button>
+              <button class="chip" data-claim="jti">New jti</button>
+            </div>
+          </div>
+        </div>
+        <div class="col">
+          <div class="card">
+            <h2>Signing key</h2>
+            <div class="row small">
+              <label>Algorithm <select id="enc-alg"></select></label>
+              <label>Secret encoding
+                <select id="enc-secret-enc">
+                  <option value="utf8">UTF-8</option>
+                  <option value="base64">Base64</option>
+                  <option value="base64url">Base64url</option>
+                  <option value="hex">Hex</option>
+                </select>
+              </label>
+              <button id="gen-key" class="ghost">Generate key</button>
+            </div>
+            <label for="enc-key" class="small muted">HMAC secret, PKCS#8 private key PEM or private JWK</label>
+            <textarea id="enc-key" class="mono key-input tall" spellcheck="false" autocomplete="off"></textarea>
+            <div id="gen-public-wrap" hidden>
+              <label for="gen-public" class="small muted">Matching public key (paste this into Verify)</label>
+              <textarea id="gen-public" class="mono key-input" readonly></textarea>
+            </div>
+          </div>
+          <div class="card">
+            <h2>Signed token</h2>
+            <div class="row">
+              <button id="sign" class="primary">Sign</button>
+              <button id="to-debugger">Open in debugger</button>
+              <button id="copy-token" class="ghost">Copy</button>
+            </div>
+            <div id="enc-error" class="error" role="alert" hidden></div>
+            <div id="enc-output" class="mono token-colored"></div>
+          </div>
+          <div class="card">
+            <h2>Attack payloads</h2>
+            <p class="small muted">Build test tokens for checking your own verifier. Only use them against systems you are authorised to test.</p>
+            <div class="attack-list">
+              <button data-attack="none">alg: none (signature stripped)</button>
+              <button data-attack="None">alg: "None" (case bypass)</button>
+              <button data-attack="empty-sig">Keep alg, empty signature</button>
+              <button data-attack="confusion">RS/ES to HS256 key confusion</button>
+              <button data-attack="kid-null">kid = /dev/null, empty secret</button>
+              <button data-attack="jwk">Embed own jwk (self-signed)</button>
+            </div>
+            <div id="attack-help" class="small result"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================== OAUTH ============================== -->
+    <section id="panel-oauth" role="tabpanel" aria-labelledby="tab-oauth" class="panel" hidden>
+      <div class="card">
+        <h2>Authorization request URL</h2>
+        <p class="small muted">Paste the URL your app sends users to (the <code>/authorize</code> request). It is checked against the OAuth 2.0 Security Best Current Practice (RFC 9700) and OpenID Connect Core.</p>
+        <textarea id="oauth-url" class="mono key-input" spellcheck="false" placeholder="https://idp.example.com/authorize?response_type=code&amp;client_id=...&amp;redirect_uri=...&amp;code_challenge=..."></textarea>
+        <div class="row">
+          <button id="oauth-inspect" class="primary">Inspect</button>
+          <button class="chip" data-oauth-sample="bad">Sample: implicit flow</button>
+          <button class="chip" data-oauth-sample="good">Sample: code + PKCE</button>
+        </div>
+        <div id="oauth-error" class="error" role="alert" hidden></div>
+      </div>
+      <div class="grid" id="oauth-out" hidden>
+        <div class="col">
+          <div class="card">
+            <h2>Findings <span id="oauth-count" class="badge"></span></h2>
+            <ul id="oauth-findings" class="findings"></ul>
+          </div>
+        </div>
+        <div class="col">
+          <div class="card">
+            <h2>Parameters</h2>
+            <div id="oauth-endpoint" class="mono small"></div>
+            <table id="oauth-params" class="claims"></table>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <span>Open source, MIT licensed. Runs entirely client-side; read the code to check.</span>
+    <a href="https://github.com/DaveyD347/jwt-debugger">Source on GitHub</a>
+  </footer>
+</body>
+</html>
